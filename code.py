@@ -7,7 +7,7 @@ import pwmio
 PWM_FREQ = 1000  # PWM frequency in Hz
 PWM_MAX = 65535  # Maximum PWM duty cycle
 PWM_HALF = PWM_MAX // 2  # 50% brightness step
-ENCODER_STEP = 1000  # Step size for brightness adjustment
+ENCODER_STEP = 100  # Step size for brightness adjustment
 
 # Define PWM outputs for LED strings
 led1 = pwmio.PWMOut(board.D5, frequency=PWM_FREQ, duty_cycle=0)
@@ -39,10 +39,16 @@ def update_brightness(encoder, last_pos, led, key):
 # Function to handle button press
 def handle_button(button, led, key):
     if not button.value:
-        while not button.value:
-            pass  # Debounce
-        toggle_state[key] = not toggle_state[key]
-        led.duty_cycle = PWM_HALF if toggle_state[key] else 0
+        time.sleep(0.05)  # Simple debounce delay
+        if not button.value:  # Check if still pressed
+            toggle_state[key] = not toggle_state[key]
+            if toggle_state[key]:
+                last_brightness[key] = brightness[key]
+                led.duty_cycle = PWM_HALF  # Set to 50% brightness
+            else:
+                led.duty_cycle = 0  # Turn off
+            while not button.value:  # Wait for button release
+                pass
 
 while True:
     last_position["encoder1"] = update_brightness(encoder1, last_position["encoder1"], led1, "led1")
